@@ -1,11 +1,13 @@
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 class MemberBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=120, description="Name of the library member.")
-    email: EmailStr = Field(..., description="Unique email address of the member.")
-    membership_id: str = Field(..., description="Unique library membership ID.")
-    phone: str = Field(..., description="Contact phone number formatted as XXX-XXX-XXXX.")
+    model_config = ConfigDict(extra="forbid") # Forbids unexpected client-supplied fields
+    
+    name: str = Field(..., min_length=1, examples=["Alice Smith"])
+    email: EmailStr = Field(..., description="Unique email address", examples=["alice@example.com"])
+    membership_id: str = Field(..., description="Unique membership ID", examples=["M12345"])
+    phone: str = Field(..., description="Contact phone number", examples=["555-123-4567"])
 
     @field_validator("name")
     @classmethod

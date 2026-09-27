@@ -1,11 +1,28 @@
 from fastapi import FastAPI
 from app.routers import books, members
 
+tags_metadata = [
+    {
+        "name": "Root",
+        "description": "Root entry point for API health check.",
+    },
+    {
+        "name": "members",
+        "description": "Operations with library members, including registration and profile tracking.",
+    },
+    {
+        "name": "books",
+        "description": "Operations with library books, including cataloging and searching.",
+    },
+]
+
 app = FastAPI(
-    title="Library Management System API",
-    description="SDEV 3310 Assignment 1 working version utilizing temporary local application memory state.",
-    version="1.0.0"
+    title="Library Management API",
+    description="SDEV 3310 Assignment 1",
+    version="1.0.0",
+    openapi_tags=tags_metadata
 )
+
 
 # Mount router resource layers
 app.include_router(members.router)

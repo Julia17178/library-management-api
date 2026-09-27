@@ -1,12 +1,14 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from datetime import datetime
 
 class BookBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200, description="Title of the book.")
-    author: str = Field(..., min_length=1, max_length=120, description="Author of the book.")
-    isbn: str = Field(..., description="Unique International Standard Book Number.")
-    published_year: int = Field(..., description="Year published between 1450 and the current year.")
-    member_id: int = Field(..., description="The ID of the existing Member who borrowed this Book.")
+    model_config = ConfigDict(extra="forbid") 
+    
+    title: str = Field(..., min_length=1, max_length=200, description="Title of the book.", examples=["The Great Gatsby"])
+    author: str = Field(..., min_length=1, max_length=120, description="Author of the book.", examples=["F. Scott Fitzgerald"])
+    isbn: str = Field(..., description="Unique International Standard Book Number.", examples=["978-0743273565"])
+    published_year: int = Field(..., description="Year published between 1450 and the current year.", examples=[1925])
+    member_id: int = Field(..., description="The ID of the existing Member who borrowed this Book.", examples=[1])
 
     @field_validator("title", "author")
     @classmethod
