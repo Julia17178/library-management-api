@@ -11,3 +11,14 @@ This iteration organizes the FastAPI application into distinct structural layers
 ## Setup Instructions
 1. Activate your virtual environment.
 2. Run the application server: `uvicorn app.main:app --reload`
+
+## API Endpoints
+
+### Books
+* `GET /books` - Retrieve all books
+* `GET /books/{book_id}` - Retrieve a specific book by ID
+* `POST /books` - Add a new book to the library
+
+### Members
+* `GET /members` - Retrieve all registered members
+* `POST /members` - Register a new member
