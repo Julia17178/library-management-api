@@ -12,13 +12,27 @@ This iteration organizes the FastAPI application into distinct structural layers
 1. Activate your virtual environment.
 2. Run the application server: `uvicorn app.main:app --reload`
 
-## API Endpoints
+## Core Execution Flow Examples
 
-### Books
-* `GET /books` - Retrieve all books
-* `GET /books/{book_id}` - Retrieve a specific book by ID
-* `POST /books` - Add a new book to the library
+### 1. Add Library Member Record (POST /members)
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "membership_id": "LIB-98765",
+  "phone": "555-019-2834"
+}
+```
+**Expected Server Status Response:** `201 Created`
 
-### Members
-* `GET /members` - Retrieve all registered members
-* `POST /members` - Register a new member
+### 2. Issue Book Loan Log (POST /books)
+```json
+{
+  "title": "The Clean Coder",
+  "author": "Robert C. Martin",
+  "isbn": "978-0137081073",
+  "published_year": 2011,
+  "member_id": 1
+}
+```
+**Expected Server Status Response:** `201 Created`
