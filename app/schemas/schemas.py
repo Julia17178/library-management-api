@@ -1,34 +1,44 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, EmailStr, StringConstraints
+from typing import Annotated
 
-# --- BOOK SCHEMAS ---
-class BookBase(BaseModel):
-    title: str = Field(..., min_length=1, description="The title of the book")
-    author: str = Field(..., min_length=1, description="The author of the book")
-    isbn: str = Field(..., min_length=10, max_length=13, description="Unique ISBN code")
+# Enforce stripped whitespace and character limits for required string inputs
+TrimmedTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+TrimmedAuthor = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+TrimmedName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 
-class BookCreate(BookBase):
-    pass
-
-class BookResponse(BookBase):
-    id: int
-    member_id: Optional[int] = None
-
-    model_config = {"from_attributes": True}
-
-
-# --- MEMBER SCHEMAS ---
 class MemberBase(BaseModel):
-    membership_id: str = Field(..., min_length=3, description="Unique library membership ID")
-    name: str = Field(..., min_length=1, description="Full name of the library member")
-    email: EmailStr = Field(..., description="Unique personal email address")
+    name: TrimmedName
+    email: EmailStr
+    membership_id: str = Field(..., min_length=1)
+    phone: str = Field(..., pattern=r"^\d{3}-\d{3}-\d{4}$")
 
 class MemberCreate(MemberBase):
     pass
 
+class MemberUpdate(MemberBase):
+    pass
+
 class MemberResponse(MemberBase):
     id: int
-    # Includes their books automatically when viewing a member response payload
-    books: List[BookResponse] = []
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
+
+class BookBase(BaseModel):
+    title: TrimmedTitle
+    author: TrimmedAuthor
+    isbn: str = Field(..., min_length=1)
+    published_year: int = Field(..., ge=1450, le=2026)
+    member_id: int
+
+class BookCreate(BookBase):
+    pass
+
+class BookUpdate(BookBase):
+    pass
+
+class BookResponse(BookBase):
+    id: int
+
+    class Config:
+        from_attributes = True

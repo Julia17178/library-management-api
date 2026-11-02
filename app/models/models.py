@@ -14,9 +14,9 @@ class Member(Base):
     membership_id = Column(String, unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
+    phone = Column(String, nullable=False)
 
     # One-to-many relationship: A member can have many books checked out
-    # cascade="all, delete-orphan" is omitted so deleting a member with books fails cleanly via foreign key
     books = relationship("Book", back_populates="member")
 
 
@@ -31,10 +31,10 @@ class Book(Base):
     
     # Enforcing unique and non-null constraint on ISBN
     isbn = Column(String, unique=True, nullable=False, index=True)
+    published_year = Column(Integer, nullable=False)
     
-    # Foreign key constraint pointing to the member table
-    # Set to nullable=True if a book can exist without being checked out by a member
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=True)
+    # Foreign key constraint linking back to the associated member
+    member_id = Column(Integer, ForeignKey("members.id"), nullable=False)
 
     # Relationship linking back to the Member model
     member = relationship("Member", back_populates="books")

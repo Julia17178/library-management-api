@@ -1,34 +1,44 @@
 from sqlalchemy.orm import Session
-from app.models.models import Member
-from app.schemas.schemas import MemberCreate
+from app.models.models import Member, Book
+from app.schemas.schemas import MemberCreate, MemberUpdate
 
 class MemberRepository:
     def get_all(self, db: Session):
-        """Fetch all library members along with their books."""
         return db.query(Member).all()
 
     def get_by_id(self, db: Session, member_id: int):
-        """Fetch a single member by their database auto-increment ID."""
         return db.query(Member).filter(Member.id == member_id).first()
 
     def get_by_membership_id(self, db: Session, membership_id: str):
-        """Fetch a single member by their unique library card membership ID."""
         return db.query(Member).filter(Member.membership_id == membership_id).first()
 
     def get_by_email(self, db: Session, email: str):
-        """Fetch a single member by their unique email address."""
         return db.query(Member).filter(Member.email == email).first()
 
     def create(self, db: Session, member_data: MemberCreate) -> Member:
-        """Insert a brand new member row into the database."""
         db_member = Member(
             membership_id=member_data.membership_id,
             name=member_data.name,
-            email=member_data.email
+            email=member_data.email,
+            phone=member_data.phone
         )
         db.add(db_member)
         return db_member
 
+    def update(self, db: Session, member_id: int, member_data: MemberUpdate) -> Member:
+        db_member = db.query(Member).filter(Member.id == member_id).first()
+        if db_member:
+            db_member.name = member_data.name
+            db_member.email = member_data.email
+            db_member.membership_id = member_data.membership_id
+            db_member.phone = member_data.phone
+        return db_member
+
     def delete(self, db: Session, db_member: Member) -> None:
-        """Remove an existing member row from the database."""
         db.delete(db_member)
+
+    def has_associated_books(self, db: Session, member_id: int) -> bool:
+        return db.query(Book).filter(Book.member_id == member_id).count() > 0
+
+    def get_books(self, db: Session, member_id: int) -> list[Book]:
+        return db.query(Book).filter(Book.member_id == member_id).all()

@@ -1,29 +1,51 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-
-from app.core.dependencies import get_book_service
-from app.schemas.schemas import BookCreate, BookResponse
 from app.services.book_service import BookServiceABC
+from app.services.member_service import MemberServiceABC
+from app.schemas.schemas import BookCreate, BookUpdate, BookResponse
+from app.core.dependencies import get_book_service, get_member_service
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
-@router.get("", response_model=List[BookResponse], status_code=status.HTTP_200_OK)
-async def list_books(service: BookServiceABC = Depends(get_book_service)):
-    """Fetch all cataloged books from storage."""
-    return service.get_all_books()
-
-@router.get("/{book_id}", response_model=BookResponse, status_code=status.HTTP_200_OK)
-async def get_book(book_id: int, service: BookServiceABC = Depends(get_book_service)):
-    """Fetch a single book by its sequential ID."""
-    return service.get_book_by_id(book_id)
-
 @router.post("", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
-async def create_book(book_data: BookCreate, service: BookServiceABC = Depends(get_book_service)):
-    """Add a new book to the library system catalog."""
-    return service.create_book(book_data)
+def create_book(book_in: BookCreate, service: BookServiceABC = Depends(get_book_service), member_service: MemberServiceABC = Depends(get_member_service)):
+    if not member_service.get_by_id(book_in.member_id):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Referenced Member does not exist")
+    try:
+        return service.create(book_in)
+    except Exception as e:
+        if "conflict" in str(e).lower() or "isbn" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.get("", response_model=List[BookResponse])
+def get_all_books(service: BookServiceABC = Depends(get_book_service)):
+    return service.get_all()
+
+@router.get("/{book_id}", response_model=BookResponse)
+def get_book(book_id: int, service: BookServiceABC = Depends(get_book_service)):
+    book = service.get_by_id(book_id)
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+    return book
+
+@router.put("/{book_id}", response_model=BookResponse)
+def update_book(book_id: int, book_in: BookUpdate, service: BookServiceABC = Depends(get_book_service), member_service: MemberServiceABC = Depends(get_member_service)):
+    book = service.get_by_id(book_id)
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+    if not member_service.get_by_id(book_in.member_id):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Referenced Member does not exist")
+    try:
+        return service.update(book_id, book_in)
+    except Exception as e:
+        if "conflict" in str(e).lower() or "isbn" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_book(book_id: int, service: BookServiceABC = Depends(get_book_service)):
-    """Remove a book from the library system catalog."""
-    service.delete_book(book_id)
-    return None
+def delete_book(book_id: int, service: BookServiceABC = Depends(get_book_service)):
+    book = service.get_by_id(book_id)
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+    service.delete(book_id)

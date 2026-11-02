@@ -1,0 +1,16 @@
+[project]
+name = "library-management-api"
+version = "0.1.0"
+description = "Library Management System API with PostgreSQL persistence"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.15.0",
+    "pydantic[email]>=2.9.2",
+    "sqlalchemy>=2.0.0",
+    "psycopg[binary]>=3.1.0",
+    "pydantic-settings>=2.0.0"
+]
+
+[tool.uv]
+managed = true
+
