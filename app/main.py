@@ -43,8 +43,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.include_router(members.router)
-app.include_router(books.router)
+
+app.include_router(
+    members.router,
+    prefix="/members",
+    tags=["Members"]
+)
+
+app.include_router(
+    books.router,
+    prefix="/books",
+    tags=["Books"]
+)
 
 @app.get("/health", tags=["System"])
 async def health_check():

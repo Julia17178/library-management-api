@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from app.services.member_service import MemberServiceABC
 from app.schemas.schemas import MemberCreate, MemberUpdate, MemberResponse, BookResponse
-# Clean Developer Comment: Import from the core module layer location
 from app.core.dependencies import get_member_service
 
-router = APIRouter(prefix="/members", tags=["Members"])
+# REMOVED prefix="/members" to prevent double-prefixing conflicts with main.py
+router = APIRouter(tags=["Members"])
 
 @router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
 def create_member(member_in: MemberCreate, service: MemberServiceABC = Depends(get_member_service)):
