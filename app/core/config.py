@@ -9,11 +9,9 @@ class StorageBackend(str, Enum):
 
 class Settings(BaseSettings):
     STORAGE_BACKEND: StorageBackend = StorageBackend.DATABASE
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/library_db"
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/library_db"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-settings = Settings()
 
 
 def get_db_engine_and_factory(database_url: str):

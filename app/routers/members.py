@@ -3,6 +3,7 @@ from typing import List
 from app.services.member_service import MemberServiceABC
 from app.schemas.schemas import MemberCreate, MemberUpdate, MemberResponse, BookResponse
 from app.core.dependencies import get_member_service
+from app.core.exceptions import BusinessRuleError, DataConflictError, ResourceNotFoundError
 
 # REMOVED prefix="/members" to prevent double-prefixing conflicts with main.py
 router = APIRouter(tags=["Members"])
@@ -11,10 +12,8 @@ router = APIRouter(tags=["Members"])
 def create_member(member_in: MemberCreate, service: MemberServiceABC = Depends(get_member_service)):
     try:
         return service.create(member_in)
-    except Exception as e:
-        if "conflict" in str(e).lower() or "already registered" in str(e).lower():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DataConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 @router.get("", response_model=List[MemberResponse])
 def get_all_members(service: MemberServiceABC = Depends(get_member_service)):
@@ -33,11 +32,12 @@ def update_member(member_id: int, member_in: MemberUpdate, service: MemberServic
     if not member:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     try:
-        return service.update(member_id, member_in)
-    except Exception as e:
-        if "conflict" in str(e).lower() or "already registered" in str(e).lower():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        updated = service.update(member_id, member_in)
+        if updated is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+        return updated
+    except DataConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_member(member_id: int, service: MemberServiceABC = Depends(get_member_service)):
@@ -46,8 +46,10 @@ def delete_member(member_id: int, service: MemberServiceABC = Depends(get_member
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     try:
         service.delete(member_id)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except BusinessRuleError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ResourceNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 @router.get("/{member_id}/books", response_model=List[BookResponse])
 def get_member_books(member_id: int, service: MemberServiceABC = Depends(get_member_service)):

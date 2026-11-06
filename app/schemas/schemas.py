@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr, StringConstraints
 from typing import Annotated
+from datetime import date
+from pydantic import field_validator
 
 # Enforce stripped whitespace and character limits for required string inputs
 TrimmedTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
@@ -35,8 +37,15 @@ class BookBase(BaseModel):
     title: TrimmedTitle
     author: TrimmedAuthor
     isbn: str = Field(..., min_length=1)
-    published_year: int = Field(..., ge=1450, le=2026)
-    member_id: int
+    published_year: int = Field(..., ge=1450)
+    member_id: int = Field(..., ge=1)
+
+    @field_validator("published_year")
+    @classmethod
+    def published_year_not_in_future(cls, value: int) -> int:
+        if value > date.today().year:
+            raise ValueError("published_year cannot be later than the current year")
+        return value
 
 class BookCreate(BookBase):
     pass
@@ -45,8 +54,15 @@ class BookUpdate(BaseModel):
     title: TrimmedTitle | None = None
     author: TrimmedAuthor | None = None
     isbn: str | None = Field(None, min_length=1)
-    published_year: int | None = Field(None, ge=1450, le=2026)
-    member_id: int | None = None
+    published_year: int | None = Field(None, ge=1450)
+    member_id: int | None = Field(None, ge=1)
+
+    @field_validator("published_year")
+    @classmethod
+    def published_year_not_in_future(cls, value: int | None) -> int | None:
+        if value is not None and value > date.today().year:
+            raise ValueError("published_year cannot be later than the current year")
+        return value
 
 class BookResponse(BookBase):
     id: int

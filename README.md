@@ -1,6 +1,6 @@
 # Library Management System API
 
-This is a layered, asynchronous FastAPI application providing a robust backend for managing library books and members. The system supports interchangeable storage backends (PostgreSQL database persistence or temporary process-local in-memory storage) using explicit service abstractions and dependency injection.
+This is a layered FastAPI application for managing library books and members. It supports interchangeable PostgreSQL and temporary process-local in-memory backends through service abstractions and dependency injection.
 
 ## Prerequisites
 - **Python 3.10+**
@@ -11,7 +11,7 @@ This is a layered, asynchronous FastAPI application providing a robust backend f
 
 1. **Clone the repository and switch to the project branch:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/Julia17178/library-management-api.git
    cd library-management-api
    git checkout assignment-2
    ```
@@ -22,9 +22,9 @@ This is a layered, asynchronous FastAPI application providing a robust backend f
    ```
 
 3. **Configure Environment Settings:**
-   Create a file named `.env` in the root folder using the layout below as a template:
+   Copy `.env.example` to `.env` in the project root and update the local database credentials if needed:
    ```ini
-   DATABASE_URL=postgresql://postgres:password@localhost:5432/library_db
+   DATABASE_URL=postgresql+psycopg://postgres:password@localhost:5432/library_db
    STORAGE_BACKEND=DATABASE
    ```
    *(Set `STORAGE_BACKEND` to `IN_MEMORY` if you want to switch back to temporary process-local storage).*
@@ -37,15 +37,13 @@ This is a layered, asynchronous FastAPI application providing a robust backend f
 
 ## Running the Application
 
-Activate your virtual environment and start the local Uvicorn development server:
+Start the local Uvicorn development server with `uv` (no manual activation step is required):
 
 ```bash
-# Activate environment
-.venv\Scripts\activate
-
-# Launch development web server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+If you prefer to activate the environment manually, use `.venv\\Scripts\\activate` in Windows PowerShell or `source .venv/bin/activate` on macOS/Linux, then run `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
 
 ## Interactive API Documentation
 
@@ -71,6 +69,24 @@ Once the server indicates that startup is complete, you can review, test, and ex
 - `PUT /books/{book_id}` - Update book properties
 - `DELETE /books/{book_id}` - Permanently delete a book record
 
+## Example Requests
+
+Create a Member:
+
+```bash
+curl -X POST http://127.0.0.1:8000/members \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Avery Reader","email":"avery@example.com","membership_id":"LIB-1001","phone":"555-123-4567"}'
+```
+
+Create a Book for the returned Member ID (replace `1` with the actual ID):
+
+```bash
+curl -X POST http://127.0.0.1:8000/books \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Example Book","author":"Example Author","isbn":"978-1-4028-9462-6","published_year":2020,"member_id":1}'
+```
+
 ## Current Project Structure Tree
 
 ```text
@@ -84,6 +100,8 @@ library-management-api/
 │   ├── services/       # Core business logic processing and transaction boundaries
 │   └── main.py         # Application lifecycle and router registration entrypoint
 ├── .env.example        # Reference configurations file
+├── .gitignore           # Keeps local environment settings out of Git
 ├── pyproject.toml      # Modern tool dependency metadata manifest
+├── uv.lock              # Locked dependency versions
 └── README.md           # Documentation guide
 ```

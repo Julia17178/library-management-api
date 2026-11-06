@@ -28,10 +28,10 @@ class MemberRepository:
     def update(self, db: Session, member_id: int, member_data: MemberUpdate) -> Member:
         db_member = db.query(Member).filter(Member.id == member_id).first()
         if db_member:
-            db_member.name = member_data.name
-            db_member.email = member_data.email
-            db_member.membership_id = member_data.membership_id
-            db_member.phone = member_data.phone
+            for key, value in member_data.model_dump(
+                exclude_unset=True, exclude_none=True
+            ).items():
+                setattr(db_member, key, value)
         return db_member
 
     def delete(self, db: Session, db_member: Member) -> None:
