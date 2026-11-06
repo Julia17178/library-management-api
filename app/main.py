@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
-from app.core.config import settings, StorageBackend, get_db_engine_and_factory
+from app.core.config import Settings, StorageBackend, get_db_engine_and_factory
 from app.models.models import Base
 
 from app.repositories.member_repo import MemberRepository
@@ -13,6 +13,9 @@ from app.routers import books, members
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings = Settings()
+    app.state.settings = settings
+
     if settings.STORAGE_BACKEND == StorageBackend.DATABASE:
         # Dynamically generate engine and session factory at application startup
         engine, session_factory = get_db_engine_and_factory(settings.DATABASE_URL)
@@ -26,11 +29,15 @@ async def lifespan(app: FastAPI):
         book_repo = BookRepository()
         
         app.state.member_service = DatabaseMemberService(session_factory, member_repo)
-        app.state.book_service = DatabaseBookService(session_factory, book_repo)
+        app.state.book_service = DatabaseBookService(
+            session_factory, book_repo, member_repo
+        )
     else:
         in_memory_member = InMemoryMemberService()
         app.state.member_service = in_memory_member
-        app.state.book_service = InMemoryBookService(in_memory_member)
+        in_memory_book = InMemoryBookService(in_memory_member)
+        in_memory_member.book_service = in_memory_book
+        app.state.book_service = in_memory_book
         
     yield
     
@@ -57,5 +64,8 @@ app.include_router(
 )
 
 @app.get("/health", tags=["System"])
-async def health_check():
-    return {"status": "healthy", "backend": settings.STORAGE_BACKEND}
+async def health_check(request: Request):
+    return {
+        "status": "healthy",
+        "backend": request.app.state.settings.STORAGE_BACKEND,
+    }

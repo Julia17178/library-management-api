@@ -26,6 +26,7 @@ class InMemoryMemberService(MemberServiceABC):
     def __init__(self):
         self._members = {}
         self._id_counter = 1
+        self.book_service = None
 
     def get_all(self):
         return list(self._members.values())
@@ -54,33 +55,33 @@ class InMemoryMemberService(MemberServiceABC):
         return new_member
 
     def update(self, member_id: int, member_data: MemberUpdate):
+        existing = self._members.get(member_id)
+        if existing is None:
+            return None
+
+        update_data = member_data.model_dump(exclude_unset=True, exclude_none=True)
         for m_id, m in self._members.items():
             if m_id != member_id:
-                if m["membership_id"] == member_data.membership_id:
+                if "membership_id" in update_data and m["membership_id"] == update_data["membership_id"]:
                     raise DataConflictError("Membership ID already exists")
-                if m["email"] == member_data.email:
+                if "email" in update_data and m["email"] == update_data["email"]:
                     raise DataConflictError("Email already registered")
 
-        updated_member = {
-            "id": member_id,
-            "membership_id": member_data.membership_id,
-            "name": member_data.name,
-            "email": member_data.email,
-            "phone": member_data.phone
-        }
-        self._members[member_id] = updated_member
-        return updated_member
+        existing.update(update_data)
+        return existing
 
     def delete(self, member_id: int):
-        from app.services.book_service import _memory_books
-        if any(b["member_id"] == member_id for b in _memory_books.values()):
+        if self.book_service and any(
+            b["member_id"] == member_id for b in self.book_service.get_all()
+        ):
             raise BusinessRuleError("Cannot delete a member with associated books")
         if member_id in self._members:
             del self._members[member_id]
 
     def get_associated_books(self, member_id: int):
-        from app.services.book_service import _memory_books
-        return [b for b in _memory_books.values() if b["member_id"] == member_id]
+        if not self.book_service:
+            return []
+        return [book for book in self.book_service.get_all() if book["member_id"] == member_id]
 
 
 class DatabaseMemberService(MemberServiceABC):
