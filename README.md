@@ -92,16 +92,27 @@ curl -X POST http://127.0.0.1:8000/books \
 ```text
 library-management-api/
 ├── app/
-│   ├── core/           # App configuration and settings validation
-│   ├── models/         # SQLAlchemy ORM database mappings
-│   ├── repositories/   # Data-access layers running raw SQL / ORM filters
-│   ├── routers/        # FastAPI HTTP endpoints, payload routers, and status maps
-│   ├── schemas/        # Pydantic input / output payload validation blueprints
-│   ├── services/       # Core business logic processing and transaction boundaries
-│   └── main.py         # Application lifecycle and router registration entrypoint
-├── .env.example        # Reference configurations file
-├── .gitignore           # Keeps local environment settings out of Git
-├── pyproject.toml      # Modern tool dependency metadata manifest
-├── uv.lock              # Locked dependency versions
-└── README.md           # Documentation guide
+│   ├── core/
+│   │   ├── config.py          # Typed settings and database engine/session factory
+│   │   ├── dependencies.py    # FastAPI service dependencies
+│   │   └── exceptions.py      # Application-specific exceptions
+│   ├── models/
+│   │   └── models.py          # SQLAlchemy Member and Book models
+│   ├── repositories/
+│   │   ├── book_repo.py       # SQLAlchemy Book queries and writes
+│   │   └── member_repo.py     # SQLAlchemy Member queries and writes
+│   ├── routers/
+│   │   ├── books.py           # Book HTTP endpoints and error translation
+│   │   └── members.py         # Member HTTP endpoints and error translation
+│   ├── schemas/
+│   │   └── schemas.py         # Pydantic request and response models
+│   ├── services/
+│   │   ├── book_service.py    # Book use cases and storage implementations
+│   │   └── member_service.py  # Member use cases and storage implementations
+│   └── main.py                # Application setup and router registration
+├── .env.example               # Local database and backend settings example
+├── .gitignore                 # Excludes local environment files
+├── pyproject.toml             # Project metadata and dependencies
+├── uv.lock                    # Locked dependency versions
+└── README.md                  # Setup and API documentation
 ```

@@ -6,7 +6,7 @@ from app.core.dependencies import get_book_service
 from app.core.exceptions import DataConflictError, ResourceNotFoundError
 
 # Removed the prefix here since it is now handled centrally in app/main.py
-router = APIRouter(tags=["Books"])
+router = APIRouter()
 
 @router.post("", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
 def create_book(book_in: BookCreate, service: BookServiceABC = Depends(get_book_service)):

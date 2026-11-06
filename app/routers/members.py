@@ -6,7 +6,7 @@ from app.core.dependencies import get_member_service
 from app.core.exceptions import BusinessRuleError, DataConflictError, ResourceNotFoundError
 
 # REMOVED prefix="/members" to prevent double-prefixing conflicts with main.py
-router = APIRouter(tags=["Members"])
+router = APIRouter()
 
 @router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
 def create_member(member_in: MemberCreate, service: MemberServiceABC = Depends(get_member_service)):
