@@ -26,7 +26,7 @@ class BookRepository:
             return None
         
         
-        update_data = book_data.model_dump(exclude_unset=True)
+        update_data = book_data.model_dump(exclude_unset=True, exclude_none=True)
         for key, value in update_data.items():
             setattr(db_book, key, value)
             
