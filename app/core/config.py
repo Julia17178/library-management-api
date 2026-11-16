@@ -10,6 +10,8 @@ class StorageBackend(str, Enum):
 class Settings(BaseSettings):
     STORAGE_BACKEND: StorageBackend = StorageBackend.DATABASE
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/library_db"
+    DEMO_MEMBER_TOKEN: str = "member-demo-token"
+    DEMO_ADMIN_TOKEN: str = "admin-demo-token"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 
 from app.core.config import Settings, StorageBackend, get_db_engine_and_factory
+from app.core.error_handlers import register_error_handlers
 from app.models.models import Base
 
 from app.repositories.member_repo import MemberRepository
@@ -17,12 +18,10 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
 
     if settings.STORAGE_BACKEND == StorageBackend.DATABASE:
-        # Dynamically generate engine and session factory at application startup
         engine, session_factory = get_db_engine_and_factory(settings.DATABASE_URL)
         app.state.db_engine = engine
         app.state.session_factory = session_factory
         
-        # Verify table layout states exist on target backend
         Base.metadata.create_all(bind=engine)
         
         member_repo = MemberRepository()
@@ -46,10 +45,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Library Management System API",
-    version="2.0.0",
+    version="3.0.0",
     lifespan=lifespan
 )
 
+register_error_handlers(app)
 
 app.include_router(
     members.router,

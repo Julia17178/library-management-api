@@ -1,0 +1,68 @@
+"""FastAPI dependencies that authenticate Bearer tokens and enforce roles."""
+
+from typing import Annotated
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from app.auth.users import AuthenticatedUser, Role, get_user_for_token
+from app.core.config import Settings
+from app.core.dependencies import get_settings
+from app.schemas.problem_details import (
+    FORBIDDEN_PROBLEM_RESPONSE,
+    UNAUTHORIZED_PROBLEM_RESPONSE,
+)
+
+bearer_scheme = HTTPBearer(auto_error=False, scheme_name="BearerAuthentication")
+BearerCredentials = Annotated[
+    HTTPAuthorizationCredentials | None,
+    Depends(bearer_scheme),
+]
+
+AUTHENTICATED_RESPONSES = {401: UNAUTHORIZED_PROBLEM_RESPONSE}
+ADMIN_RESPONSES = {
+    401: UNAUTHORIZED_PROBLEM_RESPONSE,
+    403: FORBIDDEN_PROBLEM_RESPONSE,
+}
+
+
+def unauthenticated() -> HTTPException:
+    """Build the standard response for absent or invalid credentials."""
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Missing or invalid Bearer token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+AppSettings = Annotated[Settings, Depends(get_settings)]
+
+
+def get_current_user(
+    credentials: BearerCredentials,
+    settings: AppSettings,
+) -> AuthenticatedUser:
+    """Authenticate a recognized Bearer token and return its demo user."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise unauthenticated()
+
+    user = get_user_for_token(credentials.credentials, settings)
+    if user is None:
+        raise unauthenticated()
+    return user
+
+
+CurrentUser = Annotated[AuthenticatedUser, Depends(get_current_user)]
+
+
+def require_admin(current_user: CurrentUser) -> AuthenticatedUser:
+    """Allow only an authenticated administrator to continue to a write route."""
+    if current_user.role is not Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator role required",
+        )
+    return current_user
+
+
+AdminUser = Annotated[AuthenticatedUser, Depends(require_admin)]

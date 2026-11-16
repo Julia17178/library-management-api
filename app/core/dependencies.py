@@ -1,6 +1,11 @@
 from fastapi import Request
+from app.core.config import Settings
 from app.services.book_service import BookServiceABC
 from app.services.member_service import MemberServiceABC
+
+def get_settings(request: Request) -> Settings:
+    """Injects the active application settings loaded at startup."""
+    return request.app.state.settings
 
 def get_member_service(request: Request) -> MemberServiceABC:
     """
